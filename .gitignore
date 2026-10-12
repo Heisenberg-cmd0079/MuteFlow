@@ -1,9 +1,26 @@
-/.idea/
-/build/
-/dist/
-/utils/config.yaml
+# Local rules, state and diagnostic data
 /config.yaml
+/config.yaml.tmp
 /backup_config.yaml
-*.exe.spec
+/config_backups/
 /logs/
+/volume_recovery.json*
+/muter_gui_settings.json
 /process_name.txt
+/run.lock
+/demo-config.yaml
+/manager_runtime/
+/muter_runtime/
+
+# Python and generated builds
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+build/
+dist/
+*.spec
+*.exe
+*.zip
+.idea/
+.vscode/

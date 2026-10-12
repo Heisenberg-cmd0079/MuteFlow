@@ -1,0 +1,15 @@
+setting:
+  bg_scan_interval: 1
+  max_log_files: 3
+  setup_msg: true
+
+default:
+  loop_interval: 0.2
+  fg_volume: auto
+  bg_volume: 0
+  ignore: []
+  easing:
+    duration: 0.5
+    steps: 50
+
+processes: {}

@@ -1,80 +1,89 @@
-# AutoMuteBG
+# 后台静音助手 · MuteFlow
 
-让设定的进程在后台时自动静音，切换到前台恢复。
+让选定的应用在后台自动静音，切回前台恢复音量。支持 Windows 10 / 11。
 
-本程序的原理为调整系统的音量合成器，仅Windows可用。
+基于 [lingkai5wu/AutoMuteBG](https://github.com/lingkai5wu/AutoMuteBG) v0.2.2 改进，保留原项目的 MIT 许可证和版权声明。本仓库是独立维护的修改版，不是原作者发布的官方版本。
 
-开源地址：[GitHub](https://github.com/lingkai5wu/AutoMuteBG) | [Gitee](https://gitee.com/lingkai5wu/AutoMuteBG)，主要使用前者。
+## 下载和使用
 
-## 使用方法
+1. 到 [Releases](https://github.com/Heisenberg-cmd0079/MuteFlow/releases/latest) 下载 `MuteFlow-*-windows-x64.zip`。
+2. 把 ZIP 完整解压到固定目录，例如 `D:\Apps\MuteFlow`。
+3. 双击 **后台静音助手.exe**，在“添加应用”中选择要在后台静音的应用。
+4. 想让它随 Windows 启动，在“设置与备份”中开启“开机自动启动静音服务”。
 
-### 首次使用
+`manager_runtime` 和 `muter_runtime` 是配套运行库，请和两个 exe 一起保留。关闭管理器后，静音服务仍在后台运行；从系统托盘选择“退出”，才会退出服务。
 
-以本程序默认的配置，对`崩坏：星穹铁道`后台静音为例：
+## 主要功能
 
-1. 下载最近版本的`background_muter.exe`。
-    - **国内访问：[Gitee Releases](https://gitee.com/lingkai5wu/AutoMuteBG/releases/latest)**
-    - [GitHub Releases](https://github.com/lingkai5wu/AutoMuteBG/releases/latest)
-2. 运行`background_muter.exe`，程序会在后台运行，自动根据前后台情况调整目标进程的音量。
-3. 可以从任务托盘的右键菜单手动退出，也可随计算机关闭。
+- 应用图形化管理：搜索、勾选批量添加、逐行编辑与移除。
+- 前台自动恢复原音量，后台静音，也可分别设置音量。
+- 配置热加载：运行中新增、修改、删除规则会自动生效。
+- 移除规则或安全退出时恢复音量，避免应用卡在静音状态。
+- 主进程开窗口、子进程放音频的应用按同一可执行文件判定前后台。
+- 同名进程合并显示；可查看进程、窗口和路径详情。
+- 配置自动备份、备份恢复和开机启动设置。
+- 单实例互斥、扫描线程监控和工作进程异常退出后的有限次数重启。
 
-### 自定义配置
+托盘菜单只保留 **进程管理、进程列表、退出**。
 
-通过修改配置文件可以添加多个需要被本程序自动调整的进程，并自定义每个进程的处理参数。
+## 界面示例
 
-首次运行程序会在同目录下创建配置文件`config.yaml`，该文件复制自[default_config.yaml](resource/default_config.yaml)。
+下图使用示例规则，不包含维护者的个人配置。
 
-#### 配置说明
+![静音规则](docs/screenshots/rules.png)
 
-默认配置中key不可更改，只能更改对应的值。若key存在错误，本程序会在初始化并备份原有`config.yaml`。
+## 音量与配置
 
-- `setting`（程序设置）：本程序运行的一些设置项。
-    - `bg_scan_interval`（后台扫描间隔）：
-      设置程序在后台检测目标进程是否启动的时间间隔，单位为秒。
-    - `max_log_files`（最多日志文件数）：
-      程序每次启动会以当前时间为文件名，在同目录`logs`文件夹下生成日志文件，便于排查问题。
-      设置最多日志文件数，取值范围为正整数，若超过这个数量则删除最早的日志文件。
-      设置为`0`则不会生成日志文件。
-    - `setup_msg`（启动通知）：启动完成是否显示通知，取值范围为布尔值。
+- `fg_volume: auto`：恢复接管应用时记录的音量。
+- `bg_volume: 0`：后台完全静音；`0.2` 表示 20% 音量。
+- 规则值为 `null`：沿用全局默认设置，不表示禁用。
+- `config.example.yaml` 是示例；实际规则保存在程序目录的 `config.yaml`。
 
-- `default`（默认配置）：所有进程的配置将使用以下缺省值。
-    - `loop_interval`（循环检测间隔）：指定程序循环检测前台窗口的时间间隔，单位为秒。
-      该值不应大于5秒，否则可能导致在进程后台运行时关机无法恢复音量。
-    - `fg_volume`（前台音量）：
-      指定目标进程前台音量的期望大小，单位为百分比。取值范围为 `[0, 1]` 或 `auto`。
-    - `bg_volume`（后台音量）：单位为百分比，取值范围为 `[0, 1]`。
-    - `easing`（淡入淡出效果配置）：配置淡入淡出效果的参数。
-      取值范围**仅单个进程配置中**可为下方一个或多个映射（map），或`null`。
-        - `duration`（淡入淡出持续时间）：单位为秒。
-        - `steps`（淡入淡出处理步数）
-- `processes`（单个进程配置）：指定需要被本程序自动调整的进程和配置。
-    - `StarRail.exe`：`崩坏：星穹铁道`进程的配置，`null` 表示全部沿用默认配置，若有内容则覆盖默认配置。
+修改配置前会保存备份。运行中的无效 YAML 不会替换服务的上一份有效配置。日志位于 `logs`，音量恢复记录位于 `volume_recovery.json`。
 
-#### 增加自定义配置
+## 从源码运行
 
-以增加网易云音乐的配置为例，修改后的`processes`部分如下，需注意`yaml`的严格缩进：
+需要 Windows、64 位 Python（本版本使用 Python 3.14 构建）以及 Python 自带的 Tk。
 
-```yaml
-processes:
-  StarRail.exe: null
-
-  # 需要本程序自动调整的进程名
-  cloudmusic.exe:
-    # 前台音量继承音量合成器的音量
-    fg_volume: auto
-    # 后台音量设置为 10%
-    bg_volume: 0.1
-    # 不使用淡入淡出
-    easing: null
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+Copy-Item config.example.yaml config.yaml
+.\.venv\Scripts\python.exe main.py
 ```
 
-### 已知问题
+另开一个终端运行管理器：
 
-- **在本程序运行时强制关闭（例如任务管理器），本程序无法自动恢复目标进程的音量**，遇到该问题可以再次启动本程序，或在音量合成器中重置。
-- ~~有时会忘记自己还在打游戏~~。
+```powershell
+.\.venv\Scripts\python.exe muter_gui.py
+```
 
-### 运行截图
+源码模式下先启动 `main.py`；管理器的自动启动功能寻找的是打包后的服务 exe。
 
-![image-20230506110911354](README.assets/image-20230506110911354.png)
+## 构建和测试
 
-![image-20230506111158848](README.assets/image-20230506111158848.png)
+```powershell
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+.\.venv\Scripts\python.exe tools/build_release.py
+```
+
+构建脚本使用相对路径，生成两个免临时解包的目录程序，再组装成一个 ZIP。产物位于 `dist`。
+
+测试包含模拟音频会话、配置读写、界面操作、窗口归并和隔离的进程互斥。真实 DRAPLINE 用例在应用未运行时会跳过。
+
+## 当前限制
+
+- 仅支持 Windows 的应用音频会话，不控制应用内部的音量滑块。
+- 规则按 exe 名称配置；同名应用会共用规则。
+- 管理器关闭不会停止后台静音服务。
+- 整个进程树被结束或系统关闭时，监控进程无法保证自动恢复；下次启动会尝试恢复已记录的会话。
+
+## 反馈
+
+遇到问题可在 [Issues](https://github.com/Heisenberg-cmd0079/MuteFlow/issues) 提交应用名称、操作步骤和错误信息。贴日志前请去掉其中不想公开的路径或窗口标题。
+
+## 许可和致谢
+
+原项目：[AutoMuteBG](https://github.com/lingkai5wu/AutoMuteBG)，Copyright (c) 2023 Wuu。
+
+修改版由 [Heisenberg-cmd0079](https://github.com/Heisenberg-cmd0079) 维护，继续使用 [MIT License](LICENSE)。第三方依赖保留各自许可证，构建产物会附带许可文件。
